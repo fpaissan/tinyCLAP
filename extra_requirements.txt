@@ -1,0 +1,6 @@
+speechbrain
+pandas
+transformers==4.28.1
+torchlibrosa
+micromind
+torchinfo

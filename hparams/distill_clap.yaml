@@ -1,0 +1,153 @@
+# #################################
+# The recipe for distilling the CLAP baseline.
+#
+# Author:
+#  * Francesco Paissan 2024
+# #################################
+
+# Seed needs to be set at top of yaml, before objects with parameters are made
+seed: 1234
+__set_seed: !!python/object/apply:torch.manual_seed [!ref <seed>]
+
+# Set up folders for reading from and writing to -- if null dataset is ignored
+esc_folder: null
+us8k_folder: null
+tut17_folder: null
+
+audiocaps_folder: null
+macs_folder: null
+clotho_folder: null
+fsd50k_folder: null
+
+projection_only: False
+
+# Audio Enc Student type
+audioenc_name_student: phinet_alpha_1.50_beta_0.75_t0_6_N_7
+aud_emb_dim_student: 2048
+
+zs_eval: False
+
+clap_ckpt: "https://zenodo.org/records/7312125/files/CLAP_weights_2022.pth"
+
+experiment_name: tinyCLAP
+output_folder: !ref ./results/<experiment_name>/<seed>
+save_folder: !ref <output_folder>/save
+train_log: !ref <output_folder>/train_log.txt
+
+# Tensorboard logs
+use_tensorboard: False
+tensorboard_logs_folder: !ref <output_folder>/tb_logs/
+
+ckpt_interval_minutes: 15 # save checkpoint every N min
+
+# Training parameters
+number_of_epochs: 100
+batch_size: 64
+
+lr: 0.012
+
+sample_rate: 44100
+signal_length_s: 5
+
+device: "cuda"
+
+# Feature parameters
+n_mels: 64
+spec_mag_power: 1
+
+epoch_counter: !new:speechbrain.utils.epoch_loop.EpochCounter
+    limit: !ref <number_of_epochs>
+
+opt_class: !name:torch.optim.Adam
+    lr: !ref <lr>
+
+lr_annealing: !new:speechbrain.nnet.schedulers.ReduceLROnPlateau
+    factor: 0.1
+    patience: 10
+
+# Logging + checkpoints
+train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
+    save_file: !ref <train_log>
+
+checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
+    checkpoints_dir: !ref <save_folder>
+    recoverables:
+        student_model: !ref <student_model>
+        counter: !ref <epoch_counter>
+
+pretrained_CLAP: null
+load_CLAP: !new:speechbrain.utils.parameter_transfer.Pretrainer
+    collect_in: !ref <save_folder>
+    loadables:
+        student_model: !ref <student_model>
+    paths:
+        student_model: !ref <pretrained_CLAP>
+
+fmin: 50
+fmax: 14000
+aud_emb_classes_num: 527
+
+emb_norm_type: bn
+aud_emb_dim: 2048
+txt_emb_dim: 768
+shared_emb_dim: 1024
+text_max_length: 100
+
+use_pretrained: True
+clap: !new:modules.CLAP
+    audioenc_name: Cnn14
+    classes_num: !ref <aud_emb_classes_num>
+    out_emb: !ref <aud_emb_dim>
+    text_model: bert-base-uncased
+    transformer_embed_dim: !ref <txt_emb_dim>
+    d_proj: !ref <shared_emb_dim>
+    pretrained_weights: !ref <use_pretrained>
+    CLAP_weights: !ref <clap_ckpt>
+    audioenc_name_student: !ref <audioenc_name_student>
+    out_emb_student: !ref <aud_emb_dim_student>
+
+txt_tokenizer: !apply:transformers.AutoTokenizer.from_pretrained
+    pretrained_model_name_or_path: bert-base-uncased
+
+# Interpretation hyperparams
+K: 1024
+
+# pre-processing
+n_fft: 1024
+hop_length: 320
+win_length: 1024
+use_melspectra_log1p: False
+use_melspectra: True
+use_stft2mel: True
+
+# Spectrogram extractor
+spectrogram_extractor: !new:torchlibrosa.stft.Spectrogram
+    n_fft: !ref <n_fft>
+    hop_length: !ref <hop_length>
+    win_length: !ref <win_length>
+    window: "hann"
+    center: True
+    pad_mode: "reflect"
+    freeze_parameters: True
+
+# Logmel feature extractor
+logmel_extractor: !new:torchlibrosa.stft.LogmelFilterBank
+    sr: !ref <sample_rate>
+    n_fft: !ref <win_length>
+    n_mels: !ref <n_mels>
+    fmin: !ref <fmin>
+    fmax: !ref <fmax>
+    ref: 1.0
+    amin: 0.0000000001
+    top_db: null
+    freeze_parameters: True
+
+
+student_model: !new:modules.AudioEncoder
+    audioenc_name: !ref <audioenc_name_student>
+    d_in: !ref <aud_emb_dim_student>
+    d_out: !ref <shared_emb_dim>
+    classes_num: !ref <aud_emb_classes_num>
+
+modules:
+    clap_student: !ref <student_model>
