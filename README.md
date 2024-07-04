@@ -80,3 +80,8 @@ Please refer to the HF repo for a list of available tinyCLAP models.
   year={2023}
 }
 ```
+
+## License
+
+To promote reproducibility and follow-up research on the topic, we release all code and pretrained weights publicly (Apache 2.0 License).
+Please be mindful that the Microsoft CLAP weights are released under a different license, the [MS-Public License](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/ms-pl.md). This can impact the license of the BERT weights that are used during inference (automatically downloaded from our code).
