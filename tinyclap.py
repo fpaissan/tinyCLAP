@@ -69,6 +69,7 @@ class CLAPBrain(sb.Brain):
             text_inp.attention_mask.data,
         )
 
+        aud_shared_student = None
         if not hasattr(self.modules, "clap"):
             aud_shared_student, _, _ = self.modules.clap_student(x_sb)
             aud_shared_student = aud_shared_student / aud_shared_student.norm(
@@ -266,7 +267,8 @@ if __name__ == "__main__":
     datasets = prepare_clap_datasets(hparams)
 
     hparams["clap"].to(run_opts["device"])
-    hparams["clap"].requires_grad_(False)
+    if hparams["audioenc_name_student"] is not None:
+        hparams["clap"].requires_grad_(False)
     hparams["clap"].eval()
 
     if hparams["zs_eval"]:

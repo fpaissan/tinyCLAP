@@ -414,7 +414,7 @@ class UrbanSound8K(Dataset):
 
 
 class ESC50(Dataset):
-    base_folder = "ESC-50-master"
+    base_folder = ""
     url = "https://github.com/karolpiczak/ESC-50/archive/refs/heads/master.zip"
     filename = "ESC-50-master.zip"
     audio_dir = "audio"
@@ -429,7 +429,7 @@ class ESC50(Dataset):
         root,
         sample_rate: int = 44100,
         reading_transformations: Optional[nn.Module] = None,
-        download: bool = True,
+        download: bool = False,
         train: bool = True,
         cut_off: int = 500,
     ):

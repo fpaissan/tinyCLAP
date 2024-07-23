@@ -1,0 +1,148 @@
+# #################################
+# The recipe for training the CLAP baseline.
+#
+# Author:
+#  * Francesco Paissan 2024
+# #################################
+
+# Seed needs to be set at top of yaml, before objects with parameters are made
+seed: 1234
+__set_seed: !!python/object/apply:torch.manual_seed [!ref <seed>]
+
+# Set up folders for reading from and writing to -- if null dataset is ignored
+esc_folder: null
+us8k_folder: null
+tut17_folder: null
+
+audiocaps_folder: null
+macs_folder: null
+clotho_folder: null
+fsd50k_folder: null
+
+# Audio Enc Student type
+audioenc_name_student: null
+
+projection_only: False
+
+zs_eval: False
+
+clap_ckpt: "https://zenodo.org/records/7312125/files/CLAP_weights_2022.pth"
+
+experiment_name: CLAP_Microsoft
+output_folder: !ref ./results/<experiment_name>/<seed>
+save_folder: !ref <output_folder>/save
+train_log: !ref <output_folder>/train_log.txt
+
+# Tensorboard logs
+use_tensorboard: False
+tensorboard_logs_folder: !ref <output_folder>/tb_logs/
+
+ckpt_interval_minutes: 15 # save checkpoint every N min
+
+# Training parameters
+number_of_epochs: 200
+batch_size: 16
+
+lr: !ref <batch_size> * 0.001 / 1024
+final_lr: !ref <batch_size> * 0.00000001 / 1024
+
+sample_rate: 44100
+use_mask_output: True
+signal_length_s: 5
+add_wham_noise: False
+
+device: "cuda"
+
+# Feature parameters
+n_mels: 64
+spec_mag_power: 1
+
+epoch_counter: !new:speechbrain.utils.epoch_loop.EpochCounter
+    limit: !ref <number_of_epochs>
+
+opt_class: !name:torch.optim.Adam
+    lr: !ref <lr>
+
+lr_annealing: !new:speechbrain.nnet.schedulers.ReduceLROnPlateau
+    lr_min: !ref <final_lr>
+    factor: 0.1
+    patience: 10
+    dont_halve_until_epoch: 10
+
+# Logging + checkpoints
+train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
+    save_file: !ref <train_log>
+
+checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
+    checkpoints_dir: !ref <save_folder>
+    recoverables:
+        clap: !ref <clap>
+        counter: !ref <epoch_counter>
+
+pretrained_CLAP: null
+load_CLAP: !new:speechbrain.utils.parameter_transfer.Pretrainer
+    collect_in: !ref <save_folder>
+    loadables:
+        model: !ref <clap>
+    paths:
+        model: !ref <pretrained_CLAP>
+
+fmin: 50
+fmax: 14000
+aud_emb_classes_num: 527
+
+emb_norm_type: bn
+aud_emb_dim: 2048
+txt_emb_dim: 768
+shared_emb_dim: 1024
+text_max_length: 100
+
+use_pretrained: True
+clap: !new:modules.CLAP
+    audioenc_name: Cnn14
+    classes_num: !ref <aud_emb_classes_num>
+    out_emb: !ref <aud_emb_dim>
+    text_model: bert-base-uncased
+    transformer_embed_dim: !ref <txt_emb_dim>
+    d_proj: !ref <shared_emb_dim>
+    pretrained_weights: !ref <use_pretrained>
+    CLAP_weights: !ref <clap_ckpt>
+
+txt_tokenizer: !apply:transformers.AutoTokenizer.from_pretrained
+    pretrained_model_name_or_path: bert-base-uncased
+
+# Interpretation hyperparams
+K: 1024
+
+# pre-processing
+n_fft: 1024
+hop_length: 320
+win_length: 1024
+use_melspectra_log1p: False
+use_melspectra: True
+use_stft2mel: True
+
+# Spectrogram extractor
+spectrogram_extractor: !new:torchlibrosa.stft.Spectrogram
+    n_fft: !ref <n_fft>
+    hop_length: !ref <hop_length>
+    win_length: !ref <win_length>
+    window: "hann"
+    center: True
+    pad_mode: "reflect"
+    freeze_parameters: True
+
+# Logmel feature extractor
+logmel_extractor: !new:torchlibrosa.stft.LogmelFilterBank
+    sr: !ref <sample_rate>
+    n_fft: !ref <win_length>
+    n_mels: !ref <n_mels>
+    fmin: !ref <fmin>
+    fmax: !ref <fmax>
+    ref: 1.0
+    amin: 0.0000000001
+    top_db: null
+    freeze_parameters: True
+
+modules:
+    clap: !ref <clap>
