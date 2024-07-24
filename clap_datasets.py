@@ -8,6 +8,7 @@ Authors:
 import csv
 import json
 import os
+import re
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -215,11 +216,22 @@ class FSD50k(Dataset):
         captions = []
         for f in dat.keys():
             filenames.append(f + ".wav")
-            captions.append(
-                (dat[f]["title"] + " " + dat[f]["description"])
-                .replace("wav", "")
-                .replace("WAV", "")
-            )
+            caption = dat[f]["description"]
+            tags = re.split(r"<a.*</a>", caption)
+            tags = [
+                e.strip()
+                .replace("\n", " ")
+                .replace("\r", "")
+                .replace(",", "")
+                .replace("$", "")
+                .replace("*", "")
+                .replace("_", " ")
+                for e in dat[f]["tags"]
+            ]
+            caption = " ".join(tags).strip()
+
+            captions.append(caption)
+
         self.captions = captions
         self.filenames = filenames
         self.sample_rate = sample_rate
