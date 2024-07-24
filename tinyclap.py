@@ -9,6 +9,7 @@ import sys
 
 import speechbrain as sb
 import torch
+import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
 from hyperpyyaml import load_hyperpyyaml
@@ -20,6 +21,18 @@ from clap_datasets import prepare_clap_datasets
 torch.backends.cudnn.enabled = False
 
 eps = 1e-10
+
+
+def sync_tensor_across_gpus(t):
+    if t is None:
+        return None
+
+    group = dist.group.WORLD
+    group_size = torch.distributed.get_world_size(group)
+    gather_t_tensor = [torch.zeros_like(t) for _ in range(group_size)]
+    dist.all_gather(gather_t_tensor, t)
+
+    return torch.cat(gather_t_tensor, dim=0)
 
 
 class CLAPBrain(sb.Brain):
@@ -75,6 +88,10 @@ class CLAPBrain(sb.Brain):
             aud_shared_student = aud_shared_student / aud_shared_student.norm(
                 dim=1, keepdim=True
             )
+
+        if stage == sb.Stage.TRAIN:  # TODO: check for DDP usage also
+            aud_shared = sync_tensor_across_gpus(aud_shared)
+            txt_shared = sync_tensor_across_gpus(txt_shared)
 
         return txt_shared, aud_shared, aud_shared_student
 
