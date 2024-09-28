@@ -1,8 +1,8 @@
 # tinyCLAP: Distilling Contrastive Language-Audio Pretrained models
 
-[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-blue)](https://huggingface.co/fpaissan/tinyCLAP) [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](https://arxiv.org/abs/2311.14517) [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/fpaissan/tinyCLAP/blob/main/LICENSE)
+[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-blue)](https://huggingface.co/fpaissan/tinyCLAP) [![arXiv](https://img.shields.io/badge/10.21437%2FInterspeech.2024-red?label=paper-pdf)](https://www.isca-archive.org/interspeech_2024/paissan24_interspeech.pdf) [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/fpaissan/tinyCLAP/blob/main/LICENSE)
 
-This repository contains the official implementation of [tinyCLAP](https://arxiv.org/abs/2311.14517).
+This repository contains the official implementation of [tinyCLAP](https://www.isca-archive.org/interspeech_2024/paissan24_interspeech.html).
 
 ![tinyCLAP overview](https://francescopaissan.it/tinyclapweb/assets/overview.png)
 
