@@ -73,11 +73,14 @@ Please refer to the HF repo for a list of available tinyCLAP models.
 ## Citing tinyCLAP
 
 ```
-@article{paissan2023tinyclap,
-  title={tinyCLAP: Distilling Constrastive Language-Audio Pretrained Models},
-  author={Paissan, Francesco and Farella, Elisabetta},
-  journal={arXiv preprint arXiv:2311.14517},
-  year={2023}
+@inproceedings{paissan24_interspeech,
+  title     = {tinyCLAP: Distilling Constrastive Language-Audio Pretrained Models},
+  author    = {Francesco Paissan and Elisabetta Farella},
+  year      = {2024},
+  booktitle = {Interspeech 2024},
+  pages     = {1685--1689},
+  doi       = {10.21437/Interspeech.2024-193},
+  issn      = {2958-1796},
 }
 ```
 
